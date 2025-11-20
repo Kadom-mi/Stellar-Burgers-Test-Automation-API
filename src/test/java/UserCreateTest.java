@@ -2,12 +2,14 @@ import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import net.datafaker.Faker;
+import org.junit.After;
 import org.junit.Test;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 public class UserCreateTest {
     private static final Faker faker = new Faker();
+    private String accessToken;
 
     private User createUser() {
         User user = new User();
@@ -15,16 +17,6 @@ public class UserCreateTest {
         user.setName(faker.name().fullName());
         user.setPassword(faker.internet().password(8, 16));
         return user;
-    }
-
-    private void cleanupUser(String accessToken) {
-        if (accessToken != null && !accessToken.isEmpty()) {
-            try {
-                UserMethods.deleteUser(accessToken);
-            } catch (Exception e) {
-                System.err.println("Cleanup failed: " + e.getMessage());
-            }
-        }
     }
 
     @Test
@@ -42,8 +34,6 @@ public class UserCreateTest {
                 .body("accessToken", notNullValue())
                 .body("user.email", equalTo(user.getEmail()))
                 .body("user.name", equalTo(user.getName()));
-
-        cleanupUser(accessToken);
     }
 
     @Test
@@ -64,9 +54,7 @@ public class UserCreateTest {
         duplicateResponse.then().log().all()
                 .statusCode(403)
                 .body("success", equalTo(false))
-                .body("message", equalTo("User already exists"));  // Подтвердите по API
-
-        cleanupUser(accessToken);
+                .body("message", equalTo("User already exists"));
     }
 
     @Test
@@ -82,7 +70,7 @@ public class UserCreateTest {
 
         response.then().log().all()
                 .statusCode(403)
-                .body("success", equalTo(false))  // Добавлено
+                .body("success", equalTo(false))
                 .body("message", equalTo("Email, password and name are required fields"));
     }
 
@@ -118,5 +106,16 @@ public class UserCreateTest {
                 .statusCode(403)
                 .body("success", equalTo(false))
                 .body("message", equalTo("Email, password and name are required fields"));
+    }
+
+    @After
+    public void cleanupUser() {
+        if (accessToken != null && !accessToken.isEmpty()) {
+            try {
+                UserMethods.deleteUser(accessToken);
+            } catch (Exception e) {
+                System.err.println("Cleanup failed: " + e.getMessage());
+            }
+        }
     }
 }
