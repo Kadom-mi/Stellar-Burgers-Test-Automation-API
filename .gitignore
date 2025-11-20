@@ -37,7 +37,7 @@ build/
 /target/site/
 /target/surefire-reports/
 /target/test-classes/
-.allure
+/.allure/
 
 ### VS Code ###
 .vscode/
